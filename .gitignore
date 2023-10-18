@@ -1,4 +1,5 @@
 Code/
-
+import-data/sharepoint-information.psd1
+import-data/teams-and-spo-information.psd1
 .DS_Store
 Code/.DS_Store
