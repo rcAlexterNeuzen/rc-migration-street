@@ -4,6 +4,13 @@
 ## Introduction
 This documentation explains the functionality and usage of a PowerShell script designed for installing and updating "Rapid Circle Migration Street." This script is responsible for checking for updates and installing the latest version from a GitHub repository. It also handles creating backups and dependencies installation. The script provides status messages throughout its execution to keep users informed.
 
+## Download
+The file can be download from github or through this command: 
+
+```powershell
+(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/rcAlexterNeuzen/rc-migration-street/main/install-rcmigrationstreet.ps1" -UseBasicParsing).content | Out-File Install-RCMigrationStreet.ps1
+```
+
 ## Usage
 Before running the script, ensure that PowerShell is opened with administrator privileges. The script can be executed with the following command:
 
