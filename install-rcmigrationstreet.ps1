@@ -1,147 +1,176 @@
 # 
+param(
+    [Parameter(Mandatory)]
+    [string]$InstallFolder
+)
+
+function Show-Message([String]$Message, [string]$Status) {
+    $Status = $Status.ToUpper()
+ 
+    if (!($Status)) {
+        Write-Host "$message"
+    }
+    else {
+        # to console
+        Write-Host "[" -NoNewline
+        switch ($status) {
+            INFO { Write-host "INFO" -NoNewline }
+            WARNING { Write-host "WARNING" -NoNewline -ForegroundColor Yellow }
+            WAITING { Write-host "WAITING" -NoNewline -ForegroundColor Yellow }
+            SKIPPING { Write-host "SKIPPING" -NoNewline -ForegroundColor Yellow }
+            UPDATING { Write-host "UPDATING" -NoNewline -ForegroundColor Yellow }
+            ERROR { Write-host "ERROR" -NoNewline -ForegroundColor RED }
+            ADDED { Write-host "ADDED" -NoNewline }
+            DONE { Write-Host "DONE" -ForegroundColor green -NoNewLine }
+            FINISHED { Write-Host "FINISHED" -ForegroundColor green -NoNewLine }
+        }
+        Write-Host "] - $message"
+    }
+}
 
 if (-NOT ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
             [Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "Insufficient permissions to run this script. Open the PowerShell console as an administrator and run this script again."
+    Show-Message -Status ERROR -Message "Insufficient permissions to run this script. Open the PowerShell console as an administrator and run this script again."
     Break
 }
 
-$targetLocation = "C:\RCScripts1"
+clear
+
+Show-Message -message "----------------------------------------------------------"
+Show-Message -message "Installation Rapid Circle Migration Street - $installfolder"
+Show-Message -message "----------------------------------------------------------"
+
+#region begin
+$InstallFolder = "C:\RCScripts1"
 $repo = "rcalexterneuzen/rc-migration-street"
 $filename = "rc-migration-street.zip"
 $releases = "https://api.github.com/repos/$repo/releases"
 
-if (!(Test-Path $targetLocation)) {
+if (!(Test-Path $InstallFolder)) {
     Try {
-        $create = New-Item -Path $targetLocation -ItemType Directory
-        Write-Host "[" -NoNewline
-        Write-Host "DONE" -NoNewline -ForegroundColor Green
-        Write-Host "] - Creating location for Rapid Circle Migration Street "
+        $create = New-Item -Path $InstallFolder -ItemType Directory
+        Show-Message -Status DONE -Message "Created location for Rapid Circle Migration Street: $installfolder"
     }
     Catch {
         $CreateError = $_
-        Write-Host "[" -NoNewline
-        Write-Host "ERROR" -NoNewline -ForegroundColor RED
-        Write-Host "] - Cannot create location for Rapid Circle Migration Street " -nonewLine
-        Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+        Show-Message -Status ERROR -Message "Cannot create location for Rapid Circle Migration Street"
+        Show-Message -Status ERROR -Message "$($webError.Exception.Message)"
         break
     }
 }
 else {
-    Write-Host "[" -NoNewline
-    Write-Host "DONE" -NoNewline -ForegroundColor Green
-    Write-Host "] - Location for Rapid Circle Migration Street is in place"
+    Show-Message -Status DONE -Message "Folder already exists: $installfolder"
     $inplace = $true
 }
 
-$tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+try {
+    $tag = (Invoke-WebRequest $releases | ConvertFrom-Json)[0].tag_name
+}
+catch {
+    $webError = $_
+    Show-Message -Status ERROR -Message "Error getting the latest release from Github $repo"
+    Show-Message -Status ERROR -Message "$($webError.Exception.Message)"
+    break
+}
 
 if ($Inplace) {
     $version = $Tag.Split("v")[1]
-    $info = Get-Content $targetLocation\version.json -ErrorAction SilentlyContinue | ConvertFrom-Json
+    try {
+    $info = Get-Content "$InstallFolder\version.json" -ErrorAction stop | ConvertFrom-Json
+    }
+    catch {
+        $weberror = $_
+        Show-Message -Status ERROR -Message "There was an error getting version.json : $($Weberror.Exception.Message)"
+        break
+    }
 
     if ($info.Version -eq $version) {
-        Write-Host "[" -NoNewline
-        Write-Host "DONE" -NoNewline -ForegroundColor Green
-        Write-Host "] - Rapid Circle Migration Street is up-to-date"
+        Show-Message -Status FINISHED -Message "Rapid Circle Migration Street is up-to-date"
         break
     }
     else {
-        Write-Host "[" -NoNewline
-        Write-Host "UPDATING" -NoNewline -ForegroundColor Yellow
-        Write-Host "] - Rapid Circle Migration Street will be updated to version $version"
+        Show-Message -Status UPDATING -Message "Rapid Circle Migration Street will be updated to version $version"
+
+        # creating backup
+        if (!(Test-Path $InstallFolder\Backup)){
+            Try {
+                $create = New-Item -Path "$InstallFolder\Backup" -ItemType Directory
+                Show-Message -Status DONE -Message "- Creating backup folder for Rapid Circle Migration Street"
+
+            }
+            Catch {
+                $CreateError = $_
+                Show-Message -Status ERROR -Message "Cannot create backup folder for Rapid Circle Migration Street"
+                Show-Message -Status ERROR -Message "$($createError.Exception.Message)"
+                break
+            }
+        }
+        else {
+            $archive = $InstallFolder + "\Backup\$(Get-Date -Format "ddMMyyyy")-Backup-Version-$($info.version).zip"
+            $Exclude = "BACKUP"
+            $files = Get-ChildItem -Path $installFolder -Exclude $Exclude
+            Compress-Archive -path $files -DestinationPath $archive -CompressionLevel Fastest -force 
+            Show-Message -Status DONE -Message "- Created a backup: $archive"
+        }
         Try {
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - - Found releases: " -nonewLine
             $download = "https://github.com/$repo/releases/download/$tag/$filename"
             $name = $filename.Split(".")[0]
             $zip = "$name-$tag.zip"
             $dir = "$name-$tag"
-            Write-Host "$zip" -ForegroundColor Green -NoNewline
-            Write-Host " will be downloaded"
+            Show-Message -Status Updating -Message "Updating to version $version : $zip will be downloaded"
         }
         Catch {
             $webError = $_
-            Write-Host "[" -NoNewline
-            Write-Host "ERROR" -NoNewline -ForegroundColor Red
-            Write-Host "] - - Error getting the latest release: " -nonewLine
-            Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+            Show-Message -Status ERROR -Message "Error getting the latest release: $($weberror.Exception.Message)"
+            break
         }
 
         # download zip package
         Try {
-            $location = $targetLocation + "\" + $zip
+            $location = $InstallFolder + "\" + $zip
             $download = Invoke-WebRequest $download -Out $location
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - - Downloaded $zip to $location"
-
+            Show-Message -Status DONE -Message "- Downloaded $zip to $location"
         }
         Catch {
             $webError = $_
-            Write-Host "[" -NoNewline
-            Write-Host "ERROR" -NoNewline -ForegroundColor Red
-            Write-Host "] - - Error getting the download: " 
-            Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+            Show-Message -Status ERROR -Message "Error getting the download: $($weberror.Exception.Message)"
         }
 
         Try {
-            $extract = Expand-Archive $location -Destination $targetLocation -Force
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - - Extracted $location to $targetLocation"
-
+            $extract = Expand-Archive $location -Destination $InstallFolder -Force
+            Show-Message -Status DONE -Message "- Extracted $location to $InstallFolder"
         }
         Catch {
             $webError = $_
-            Write-Host "[" -NoNewline
-            Write-Host "ERROR" -NoNewline -ForegroundColor Red
-            Write-Host "] - - Error getting the download: " 
-            Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+            Show-Message -Status ERROR -Message "Error extracting $location to $installfolder : $($weberror.Exception.Message)"
             break
         }
 
         Try {
             $remove = Remove-Item $location -Recurse -force -ErrorAction SilentlyContinue
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - - $location removed from $targetLocation"
-
+            Show-Message -Status DONE -Message "- $location removed from $InstallFolder"
         }
         Catch {
             $webError = $_
-            Write-Host "[" -NoNewline
-            Write-Host "ERROR" -NoNewline -ForegroundColor Red
-            Write-Host "] - - Cannot remove $location from $targetLocation : " 
-            Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+            Show-Message -Status ERROR -Message "- Cannot remove $location from $InstallFolder : $($weberror.Exception.Message)"
             break
         }
 
         Try {
-            $toRemove = $targetLocation + "\" + "__MACOSX"
+            $toRemove = $InstallFolder + "\" + "__MACOSX"
             $remove = Remove-Item $toRemove -Recurse -force -ErrorAction SilentlyContinue
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - - $ToRemove is removed from $targetLocation"
-
         }
         Catch {
             $webError = $_
-            Write-Host "[" -NoNewline
-            Write-Host "ERROR" -NoNewline -ForegroundColor Red
-            Write-Host "] - - Cannot remove $ToRemove from $targetLocation : " 
-            Write-Host "$($webError.Exception.Message)" -ForegroundColor Red
+            Show-Message -Status ERROR -Message "- - Cannot remove $ToRemove from $InstallFolder : $($weberror.Exception.Message)"
             break
         }
 
-        $files = Get-ChildItem -Path $targetLocation -file -Recurse
+        $files = Get-ChildItem -Path $InstallFolder -file -Recurse
         $files = $files | Where-Object { $_.Name -eq ".DS_store" }
 
         if ($files.count -eq 0) {
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - Rapid Circle Migration Street is downloaded"
+            Show-Message -Status DONE -Message "- Rapid Circle Migration Street is downloaded and extracted"
         }
         else {
             ForEach ($File in $files) {
@@ -153,33 +182,33 @@ if ($Inplace) {
                     Write-Host "$($DelError.Exception.Message)"
                 }
             }
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - Cleanup of Rapid Circle Migration Street is done"
+            Show-Message -Status DONE -Message "- Cleanup of Rapid Circle Migration Street is done"
         }
 
-        $question = Read-Host "Would you like to start the installation of the Migration Street? (Y/N)"
+        Write-Host "[" -NoNewline
+        Write-Host "QUESTION" -ForegroundColor Yellow -NoNewline
+        Write-Host "] - Would you like to start the installation of the Migration Street? (Y/N)" -NoNewline
+        $Question = Read-Host " "
+
         if ($question -ne "Y") {
-            Write-Host "[" -NoNewline
-            Write-Host "DONE" -NoNewline -ForegroundColor Green
-            Write-Host "] - Rapid Circle Migration Street is downloaded and unzipped to $TargetLocation"
+            Show-Message -Status DONE -Message "Rapid Circle Migration Street is downloaded and unzipped to $InstallFolder"
             break
         }
         else {
-            CD $targetLocation
+            CD $InstallFolder
 
             Write-Host "[" -NoNewline
             Write-Host "WAITING" -NoNewline -ForegroundColor YELLOW
             Write-Host "] - Rapid Circle Migration Street requirements are being installed" -NoNewline
             # starting installation
-            $requirements = $targetLocation + "\install-requirements.ps1"
+            $requirements = $InstallFolder + "\install-requirements.ps1"
             Start-Process Powershell -verb runAs -ArgumentList "-file $requirements" -wait
             Write-host "    DONE" -ForegroundColor Green
 
             Write-Host "[" -NoNewline
             Write-Host "WAITING" -NoNewline -ForegroundColor YELLOW
             Write-Host "] - Rapid Circle Migration Street app registration is being installed" -NoNewline
-            $appregistration = $targetLocation + "\install-app-registration.ps1"
+            $appregistration = $InstallFolder + "\install-app-registration.ps1"
             Start-Process Powershell -verb runAs -ArgumentList "-file $appregistration" -wait
             Write-host "    DONE" -ForegroundColor Green
 
@@ -189,7 +218,7 @@ if ($Inplace) {
                 Write-Host "[" -NoNewline
                 Write-Host "WAITING" -NoNewline -ForegroundColor YELLOW
                 Write-Host "] - Rapid Circle Migration Street Teams is being installed" -NoNewline
-                $teamsinstall = $targetLocation + "\install-Migrationteams.ps1"
+                $teamsinstall = $InstallFolder + "\install-Migrationteams.ps1"
                 Start-Process Powershell -verb runAs -ArgumentList "-file $teamsinstall" -wait
                 Write-host "    DONE" -ForegroundColor Green
             }
@@ -200,3 +229,4 @@ if ($Inplace) {
 
 
 
+#endregion begin
