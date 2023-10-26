@@ -6,5 +6,5 @@
 #### Current version: 
 
 
-[powershell]: https://img.shields.io/badge/module-Powershell-blue?style=for-the-badge&logo=PowerShell&logoColor=4FC08D
+[powershell]: https://img.shields.io/badge/script-Powershell-blue?style=for-the-badge&logo=PowerShell&logoColor=4FC08D
 [powershell-url]: https://learn.microsoft.com/en-gb/powershell/scripting/overview?view=powershell-7.3
