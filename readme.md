@@ -28,12 +28,14 @@ The script begins by checking if it has been executed with administrator privile
 ## Script Workflow
 The script follows the following workflow:
 
-* It starts by defining the installation folder, GitHub repository details, and other variables.
+* It defines the installation folder, GitHub repository details, and other variables.
+* If the $InstallFolder parameter is not provided, it uses a default folder path, which is "C:\RCScripts."
 * It checks if the installation folder exists. If not, it attempts to create it and displays relevant status messages.
-* It retrieves the latest release tag from the specified GitHub repository. If an error occurs during this step, it will display an error message.
-* If the installation folder already exists and the script is in an "in-place" mode, it checks if the installed version matches the latest release. If they match, it displays a "FINISHED" message, indicating that no update is needed.
-* If an update is required, it creates a backup of the current installation, downloads and extracts the new version, and removes any unnecessary files. It also handles specific issues like removing macOS-related files and provides update progress messages.
-* The script asks the user if they want to start the installation process. If confirmed, it installs dependencies and other components.
+* It retrieves the latest release tag from the specified GitHub repository. If an error occurs during this step, it displays an error message.
+* If a new installation is being performed, it downloads and extracts the latest release, removes unnecessary files, and provides update progress messages.
+* If the script is in "in-place" mode, it checks if the installed version matches the latest release. If they match, it displays a "FINISHED" message, indicating that no update is needed.
+* If an update is required for an existing installation, it creates a backup of the current version, downloads and extracts the new release, and removes unnecessary files. It also provides progress messages for each step.
+* After the update is completed, the script asks the user if they want to start the installation process for Rapid Circle Migration Street. If confirmed, it installs dependencies and other components.
 
 ## Requirements
 - The script requires Windows PowerShell with administrator privileges to execute successfully.
