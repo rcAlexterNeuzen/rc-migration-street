@@ -8,7 +8,7 @@ This documentation explains the functionality and usage of a PowerShell script d
 The file can be download from github or through this command: 
 
 ```powershell
-(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/rcAlexterNeuzen/rc-migration-street/main/install-rcmigrationstreet.ps1" -UseBasicParsing).content | Out-File Install-RCMigrationStreet.ps1
+(Invoke-WebRequest -Uri "https://raw.githubusercontent.com/rcAlexterNeuzen/rc-migration-street/main/install-rcmigrationstreet.ps1" -outFile Install-rcMigrationStreet.ps1)
 ```
 
 ## Usage
