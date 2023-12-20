@@ -29,6 +29,10 @@ The script begins by checking if it has been executed with administrator privile
 The script follows the following workflow:
 
 * It defines the installation folder, GitHub repository details, and other variables.
+* Requesting password to unzip package
+* Check if Microsoft Edge is installed
+* Check if Credential Manager is installed
+* Check if module 7Zip4Powershell is installed
 * If the $InstallFolder parameter is not provided, it uses a default folder path, which is "C:\RCScripts."
 * It checks if the installation folder exists. If not, it attempts to create it and displays relevant status messages.
 * It retrieves the latest release tag from the specified GitHub repository. If an error occurs during this step, it displays an error message.
@@ -48,4 +52,4 @@ This PowerShell script simplifies the process of installing and updating "Rapid 
 
 
 [powershell]: https://img.shields.io/badge/script-Powershell-blue?style=for-the-badge&logo=PowerShell&logoColor=4FC08D
-[powershell-url]: https://learn.microsoft.com/en-gb/powershell/scripting/overview?view=powershell-7.3
+[powershell-url]: https://learn.microsoft.com/en-gb/powershell/scripting/overview?view=powershell-7.4
