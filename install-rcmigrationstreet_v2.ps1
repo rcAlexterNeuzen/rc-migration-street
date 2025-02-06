@@ -10,7 +10,7 @@ param(
 #region Configuration
 $script:Config = @{
     Repository = "rcalexterneuzen/rc-migration-street"
-    ApiUrl = "http://www.checkyourlic.org:80"
+    ApiUrl = "https://www.checkyourlic.org:443"
     TempPath = Join-Path $env:TEMP "RCStreet"
     LogPath = Join-Path $env:TEMP "RCMigrationStreet_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
     TranscriptPath = Join-Path $env:TEMP "RCMigrationStreet_$(Get-Date -Format 'yyyyMMdd_HHmmss')_transcript.log"
