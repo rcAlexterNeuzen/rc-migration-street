@@ -500,7 +500,28 @@ if ($Inplace) {
             }
             Show-Message -Status DONE -Message "- Cleanup of Rapid Circle Migration Street is done"
         }
+    $files = Get-ChildItem -Path "$($InstallFolder)\Modules" -file -Recurse
+    $modules = $files | Where-Object { $_.Extension -eq ".psm1" }
 
+    if (!(Test-path -Path "C:\Program Files\WindowsPowershell\Modules\RapidCircle")){
+        New-Item -Path "C:\Program Files\WindowsPowershell\Modules"  -Name "RapidCircle" -ItemType "Directory"
+        }
+        
+    if ($files.count -eq 0) {
+        Show-Message -Status DONE -Message "- NO modules found to copy"
+    }
+    else {
+        ForEach ($File in $modules) {
+            try {
+                Move-Item $File.Fullname -Destination "C:\Program Files\WindowsPowerShell\Modules\RapidCircle" -force
+            }
+            catch {
+                $delError = $_
+                Write-Host "$($DelError.Exception.Message)"
+            }
+        }
+        Show-Message -Status DONE -Message "- Cleanup of Rapid Circle Migration Street is done"
+    }
 
         Show-Message -Status DONE -Message "Rapid Circle Migration Street is downloaded and unzipped to $InstallFolder"
 
