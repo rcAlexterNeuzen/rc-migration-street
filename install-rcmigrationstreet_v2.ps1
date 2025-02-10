@@ -160,5 +160,12 @@ catch {
 }
 finally {
     Stop-Transcript
+    $originalpaths = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath).PSModulePath
+
+# Add your new path to below after the ;
+
+    $newPath=$originalpaths+’;$InstallFolder\modules’
+
+Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
     Remove-Item -Path $Config.TempPath -Recurse -Force -ErrorAction SilentlyContinue
 }
